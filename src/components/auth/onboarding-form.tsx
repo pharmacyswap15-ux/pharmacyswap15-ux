@@ -321,7 +321,7 @@ export function OnboardingForm({
               <li className="flex gap-1.5">
                 <span className="mt-1.5 size-1 shrink-0 rounded-full bg-ink-faint" aria-hidden />
                 {localMode
-                  ? "الوضع المحلي: تُحفظ البيانات في مجلد .data على السيرفر."
+                  ? "البيانات تُدار محلياً أثناء التطوير."
                   : "متصل بقاعدة Supabase مع تفعيل RLS على كل الجداول."}
               </li>
             </ul>

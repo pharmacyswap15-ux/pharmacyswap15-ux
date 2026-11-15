@@ -33,9 +33,7 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const error =
-    state.error ??
-    (initialError === "demo" ? "تعذر الدخول بالحساب التجريبي — تحقق من بيانات القاعدة." : null);
+  const error = state.error ?? null;
 
   return (
     <div className="mx-auto w-full max-w-[1020px] px-3 py-5 sm:px-5">
@@ -139,9 +137,7 @@ export function LoginForm({
 
           <p className="mt-2 flex items-center gap-1 text-[9.5px] text-ink-faint">
             <Database size={10} aria-hidden />
-            {localMode
-              ? "الوضع المحلي — البيانات تُحفظ في مجلد .data على السيرفر."
-              : "متصل بقاعدة Supabase السحابية."}
+            {localMode ? "البيانات تُدار محلياً أثناء التطوير." : "متصل بقاعدة Supabase السحابية."}
           </p>
         </div>
 
@@ -155,7 +151,7 @@ export function LoginForm({
 
           <p className="mt-2 text-[10.5px] leading-relaxed text-ink-muted">
             {localMode
-              ? "استخدم بريدك الإلكتروني وكلمة المرور المسجلة في هذا السيرفر المحلي أو أنشئ حساباً جديداً فوراً."
+              ? "استخدم بريدك الإلكتروني وكلمة المرور المسجلة داخل بيئة التطوير الحالية."
               : "استخدم البريد الإلكتروني وكلمة المرور الخاصة بصيدليتك المسجلة في قاعدة البيانات السحابية."}
           </p>
 

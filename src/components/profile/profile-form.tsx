@@ -373,7 +373,7 @@ export function ProfileForm({
             </p>
             <div className="mt-2 flex items-center gap-1.5 text-[9.5px] text-ink-faint">
               <BadgeCheck size={11} aria-hidden />
-              {localMode ? "وضع تجريبي محلي — .data/db.json" : "متصل بقاعدة Supabase + RLS"}
+              {localMode ? "بيانات التطوير المحلية" : "متصل بقاعدة Supabase + RLS"}
             </div>
           </section>
 

@@ -1,0 +1,312 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   PHARMASWAP — Modern Clinical & Swiss Utilitarian Ledger
+   Light-sky canvas · white surfaces · gilded card frames · red CTA buttons
+   ========================================================================== */
+
+@theme {
+  --font-sans: var(--font-plex-arabic), "IBM Plex Sans Arabic", "Tajawal", system-ui, sans-serif;
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", var(--font-plex-arabic), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", "Consolas", ui-monospace, monospace;
+
+  --color-canvas: #e8f3fc;
+  --color-surface: #ffffff;
+  --color-sunken: #dbeaf8;
+  --color-line: #c3d9ec;
+  --color-line-strong: #a3c2dd;
+  --color-ink: #0f172a;
+  --color-ink-secondary: #3b4759;
+  --color-ink-muted: #4f5c71;
+  --color-ink-faint: #5f6d80;
+
+  --color-brand: #0b4a6e;
+  --color-brand-hover: #083a57;
+  --color-brand-soft: #d8ebf9;
+  --color-brand-line: #a6cbe7;
+  --color-brand-ink: #07344c;
+
+  /* Gilded structure — card frames, inner button ring, dividers accents */
+  --color-gold: #c9a227;
+  --color-gold-strong: #a5841a;
+  --color-gold-line: #e3cd96;
+  --color-gold-soft: #fdf6e2;
+  --color-gold-ink: #6f5509;
+
+  /* Action red — primary buttons sit on a black frame with a gold inner line */
+  --color-action: #b3261e;
+  --color-action-hover: #941d17;
+  --color-frame: #14110c;
+
+  --color-amber: #d97706;
+  --color-amber-strong: #b45309;
+  --color-amber-soft: #fffbeb;
+  --color-amber-line: #fde68a;
+  --color-amber-ink: #78350f;
+
+  --color-crimson: #dc2626;
+  --color-crimson-soft: #fef2f2;
+  --color-crimson-line: #fecaca;
+  --color-crimson-ink: #7f1d1d;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+  --radius-3xl: 8px;
+
+  --shadow-panel: 0 1px 2px rgba(11, 74, 110, 0.06);
+  --shadow-raised: 0 10px 26px -14px rgba(11, 50, 80, 0.28);
+
+  --animate-fade-in: fade-in 0.16s ease-out;
+  --animate-slide-up: slide-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-drawer-in: drawer-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-rise: rise 0.28s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: #c7e3f9;
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #a7c3db;
+    border: 3px solid var(--color-canvas);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7f9fbb;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-md border bg-surface;
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .field {
+    @apply h-10 w-full rounded-md border border-line bg-surface px-3 text-[13px] text-ink outline-none transition
+      placeholder:text-ink-faint hover:border-line-strong
+      focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:bg-sunken disabled:text-ink-muted;
+  }
+
+  .field-sm {
+    @apply h-9 text-[12px];
+  }
+
+  .field-area {
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-[13px] text-ink outline-none transition
+      placeholder:text-ink-faint hover:border-line-strong focus:border-brand focus:ring-2 focus:ring-brand/15;
+  }
+
+  .label {
+    @apply mb-1.5 flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted;
+  }
+
+  .btn {
+    @apply inline-flex h-10 shrink-0 select-none items-center justify-center gap-2 rounded-md border px-4
+      text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* Red fill · black frame · 1px gold inner ring (الزر الأحمر بإطار أسود مذهّب) */
+  .btn-primary {
+    @apply text-white;
+    border-color: var(--color-frame);
+    background-color: var(--color-action);
+    box-shadow: inset 0 0 0 1px var(--color-gold);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-action-hover);
+    box-shadow: inset 0 0 0 1px #e0bb4a;
+  }
+
+  .btn-outline {
+    @apply bg-surface;
+    color: var(--color-action);
+    border-color: var(--color-frame);
+    box-shadow: inset 0 0 0 1px var(--color-gold-line);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--color-gold-soft);
+    color: var(--color-action-hover);
+  }
+
+  .btn-ghost {
+    @apply border-transparent bg-transparent text-ink-secondary hover:bg-sunken hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply border-crimson-line bg-crimson-soft text-crimson-ink hover:border-crimson hover:bg-crimson hover:text-white;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-[12px];
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px] font-medium leading-4;
+  }
+
+  .kbd {
+    @apply rounded-sm border border-line bg-sunken px-1 font-mono text-[10px] text-ink-muted;
+  }
+
+  .th {
+    @apply px-3 py-2 text-start text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-muted;
+  }
+
+  .td {
+    @apply px-3 py-2.5 text-start align-middle text-[13px] text-ink-secondary;
+  }
+}
+
+/* Gilded frame for every card built from the surface utilities (outside the
+   utilities layer so it wins over `border-line`, while `.field` inputs keep
+   their soft slate-blue hairline). */
+.bg-surface.border-line {
+  border-color: var(--color-gold);
+}
+
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.015em;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Leaflet surface tuned to the clinical palette (no neon, no rounded bubbles). */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #e8f3fc;
+}
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #4f5c71 !important;
+}
+.leaflet-control-attribution a {
+  color: #0b4a6e !important;
+}
+.leaflet-bar,
+.leaflet-bar a {
+  border-radius: 0 !important;
+  border-color: #c9a227 !important;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 4px !important;
+  box-shadow: 0 10px 26px -14px rgba(11, 50, 80, 0.35) !important;
+  border: 1px solid #c9a227;
+}
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  direction: rtl;
+}
+
+.map-pin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: #0b4a6e;
+  border: 2px solid #ffffff;
+  border-radius: 50% 50% 50% 2px;
+  box-shadow: 0 6px 14px -6px rgba(11, 50, 80, 0.5);
+  transform: rotate(-45deg);
+}
+.map-pin > span {
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+.map-pin--amber {
+  background: #d97706;
+}
+.map-pin--slate {
+  background: #334155;
+}

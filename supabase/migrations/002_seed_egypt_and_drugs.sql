@@ -1,9 +1,8 @@
 -- ============================================================================
 -- 002_seed_egypt_and_drugs.sql
--- Seed data: 27 Egyptian governorates + cities, 8 licensed pharmacies,
--- 12 exchange listings (near-expiry / dead stock) + 4 shortage requests + 3 proposals.
--- Generated from src/data/egypt.json + src/data/seed.json — do not edit by hand.
--- Expiry dates are relative to CURRENT_DATE so the demo is always meaningful.
+-- Reference data only: 27 Egyptian governorates + cities.
+-- No demo pharmacies, listings, or swap proposals are seeded into the app.
+-- Production data must be created by authenticated pharmacy users only.
 -- ============================================================================
 
 begin;
@@ -221,43 +220,8 @@ insert into public.cities (id, governorate_id, name_ar, name_en) values
   (2707, 27, 'البلينا', 'El Balyana')
 on conflict (id) do update set name_ar = excluded.name_ar, name_en = excluded.name_en;
 
--- 3) PHARMACIES (demo licensed community pharmacies — user_id left null)
-insert into public.pharmacies (id, pharmacy_name, owner_name, phone, governorate_id, city_id, address_details, latitude, longitude, delivery_preferences, is_verified, rating_avg, swaps_count, created_at) values
-  ('00000000-0000-4000-8000-100000000001', 'صيدلية الأمل', 'د. أحمد سمير', '01001234567', 1, 101, '١٢ شارع عباس العقاد — أمام محطة مترو كلية البنات', 30.0548, 31.3452, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي', 'توصيل متبادل']::text[], true, 4.9, 37, now() - interval '67 days'),
-  ('00000000-0000-4000-8000-100000000002', 'صيدلية النور', 'د. منى عبد الرحمن', '01112223344', 1, 102, '٤٥ شارع ٩ — المعادي', 29.9602, 31.2569, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي']::text[], true, 4.8, 24, now() - interval '54 days'),
-  ('00000000-0000-4000-8000-100000000003', 'صيدلية الشفاء', 'د. محمود حسن', '01223334455', 2, 201, '٢٧ شارع جامعة الدول العربية — المهندسين', 30.0533, 31.1985, ARRAY['استلام من الصيدلية', 'توصيل متبادل']::text[], true, 4.7, 19, now() - interval '49 days'),
-  ('00000000-0000-4000-8000-100000000004', 'صيدلية الرحمة', 'د. هالة فؤاد', '01098765432', 3, 301, '١٨ شارع فوزي معاذ — سموحة', 31.2156, 29.9455, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي']::text[], true, 4.6, 12, now() - interval '42 days'),
-  ('00000000-0000-4000-8000-100000000005', 'صيدلية الحياة', 'د. كريم مصطفى', '01555667788', 4, 401, '٦ شارع الجيش — المنصورة', 31.0409, 31.3785, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي', 'توصيل متبادل']::text[], true, 4.5, 8, now() - interval '38 days'),
-  ('00000000-0000-4000-8000-100000000006', 'صيدلية ابن سينا', 'د. سارة إبراهيم', '01066554433', 12, 1203, 'الحي الأول — مدينة العبور', 30.2069, 31.4697, ARRAY['استلام من الصيدلية', 'توصيل متبادل']::text[], false, 4.2, 5, now() - interval '35 days'),
-  ('00000000-0000-4000-8000-100000000007', 'صيدلية السلام', 'د. طارق العشري', '01277889900', 8, 801, '١٢ شارع البحر — طنطا', 30.7885, 31.0019, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي']::text[], true, 4.7, 3, now() - interval '33 days'),
-  ('00000000-0000-4000-8000-100000000008', 'صيدلية المستقبل', 'د. نهى عادل', '01199887766', 18, 1801, '٣٧ شارع ٢٣ يوليو — بورسعيد', 31.259, 32.293, ARRAY['استلام من الصيدلية', 'مندوب شحن داخلي']::text[], false, 4, 2, now() - interval '32 days')
-on conflict (id) do nothing;
-
--- 4) LISTINGS — near expiry, dead stock & shortage requests
-insert into public.listings (id, pharmacy_id, listing_type, drug_name, active_ingredient, dosage_form, quantity, public_price_egp, expiry_date, batch_number, swap_preference, delivery_method, images, status, created_at) values
-  ('00000000-0000-4000-8000-200000000001', '00000000-0000-4000-8000-100000000001', 'NEAR_EXPIRY', 'بانادول أدفانس 24 قرص', 'باراسيتامول 500 مجم', 'TABLETS', 10, 45, (CURRENT_DATE + INTERVAL '48 days')::date, 'PN-8842', 'كاتافلاي شراب 120 مل أو أوجمنتين 1جم — جمهور في جمهور', 'استلام من الصيدلية', ARRAY['/seed/panadol.svg']::text[], 'ACTIVE', now() - interval '1 days'),
-  ('00000000-0000-4000-8000-200000000002', '00000000-0000-4000-8000-100000000002', 'NEAR_EXPIRY', 'كاتافلاي شراب 120 مل', 'ديكلوفيناك بوتاسيوم', 'SYRUP', 6, 38, (CURRENT_DATE + INTERVAL '70 days')::date, 'CT-1120', 'نيوروفين شراب أو بروفين شراب — جمهور في جمهور', 'مندوب شحن داخلي', ARRAY['/seed/catafly.svg']::text[], 'ACTIVE', now() - interval '2 days'),
-  ('00000000-0000-4000-8000-200000000003', '00000000-0000-4000-8000-100000000003', 'NEAR_EXPIRY', 'أوجمنتين 1جم 14 قرص', 'أموكسيسيلين + كلافولانيك أسيد', 'TABLETS', 18, 96, (CURRENT_DATE + INTERVAL '36 days')::date, 'AG-7741', 'كونكور 5 مجم أو كتافلام 50 مجم — جمهور في جمهور', 'توصيل متبادل', ARRAY['/seed/augmentin.svg']::text[], 'ACTIVE', now() - interval '3 days'),
-  ('00000000-0000-4000-8000-200000000004', '00000000-0000-4000-8000-100000000004', 'DEAD_STOCK', 'كونكور 5 مجم 30 قرص', 'بيسوبرولول فومارات', 'TABLETS', 24, 72, (CURRENT_DATE + INTERVAL '430 days')::date, 'CN-5520', 'أي أدوية ضغط أو سكر بقيمة مكافئة — جمهور في جمهور', 'استلام من الصيدلية', ARRAY['/seed/concor.svg']::text[], 'ACTIVE', now() - interval '4 days'),
-  ('00000000-0000-4000-8000-200000000005', '00000000-0000-4000-8000-100000000005', 'NEAR_EXPIRY', 'فولتارين 50 مجم 20 قرص', 'ديكلوفيناك صوديوم', 'TABLETS', 14, 54, (CURRENT_DATE + INTERVAL '92 days')::date, 'VL-3389', 'جاست ريج أو ريفو 500 — جمهور في جمهور', 'مندوب شحن داخلي', ARRAY['/seed/voltaren.svg']::text[], 'ACTIVE', now() - interval '5 days'),
-  ('00000000-0000-4000-8000-200000000006', '00000000-0000-4000-8000-100000000006', 'DEAD_STOCK', 'لانتوس سولوستار 100 وحدة/مل', 'إنسولين جلارجين', 'INJECTION', 8, 620, (CURRENT_DATE + INTERVAL '380 days')::date, 'LN-9902', 'إنسولين نوفوميكس 30 أو أقراص سكر — سلسلة تبريد مطلوبة', 'توصيل متبادل', ARRAY['/seed/lantus.svg']::text[], 'ACTIVE', now() - interval '6 days'),
-  ('00000000-0000-4000-8000-200000000007', '00000000-0000-4000-8000-100000000007', 'NEAR_EXPIRY', 'كلاريتين 10 مجم 20 قرص', 'لوراتادين', 'TABLETS', 12, 60, (CURRENT_DATE + INTERVAL '55 days')::date, 'CL-2281', 'زيرتك أو تليفاست — جمهور في جمهور', 'استلام من الصيدلية', ARRAY['/seed/claritine.svg']::text[], 'ACTIVE', now() - interval '7 days'),
-  ('00000000-0000-4000-8000-200000000008', '00000000-0000-4000-8000-100000000008', 'DEAD_STOCK', 'سيفوتاكس 1جم فيال', 'سيفوتاكسيم صوديوم', 'INJECTION', 20, 110, (CURRENT_DATE + INTERVAL '300 days')::date, 'CF-6612', 'أوجمنتين 1جم أو زيثروماكس — جمهور في جمهور', 'مندوب شحن داخلي', ARRAY['/seed/cetotax.svg']::text[], 'ACTIVE', now() - interval '8 days'),
-  ('00000000-0000-4000-8000-200000000009', '00000000-0000-4000-8000-100000000001', 'NEAR_EXPIRY', 'نيوروفين شراب 120 مل', 'إيبوبروفين 100 مجم/5 مل', 'SYRUP', 9, 42, (CURRENT_DATE + INTERVAL '40 days')::date, 'NR-4471', 'كاتافلاي شراب أو بانادول شراب — جمهور في جمهور', 'استلام من الصيدلية', ARRAY['/seed/nurofen.svg']::text[], 'ACTIVE', now() - interval '9 days'),
-  ('00000000-0000-4000-8000-200000000010', '00000000-0000-4000-8000-100000000002', 'DEAD_STOCK', 'ديكلوفيناك جل 50 جم', 'ديكلوفيناك داي إيثيل أمين 1%', 'CREAM', 30, 32, (CURRENT_DATE + INTERVAL '520 days')::date, 'DK-1190', 'مراهم أو كريمات بقيمة مكافئة — جمهور في جمهور', 'توصيل متبادل', ARRAY['/seed/diclofenac-gel.svg']::text[], 'ACTIVE', now() - interval '10 days'),
-  ('00000000-0000-4000-8000-200000000011', '00000000-0000-4000-8000-100000000003', 'NEAR_EXPIRY', 'زيثروماكس 500 مجم 3 أقراص', 'أزيثرومايسين', 'TABLETS', 7, 105, (CURRENT_DATE + INTERVAL '61 days')::date, 'ZT-7723', 'أوجمنتين 1جم — جمهور في جمهور', 'استلام من الصيدلية', ARRAY['/seed/zithromax.svg']::text[], 'ACTIVE', now() - interval '11 days'),
-  ('00000000-0000-4000-8000-200000000012', '00000000-0000-4000-8000-100000000005', 'DEAD_STOCK', 'جاست ريج 50 مجم 30 قرص', 'إيتوبريد هيدروكلوريد', 'TABLETS', 16, 66, (CURRENT_DATE + INTERVAL '340 days')::date, 'GR-2245', 'كونكور أو أدوية ضغط بقيمة مكافئة', 'مندوب شحن داخلي', ARRAY['/seed/gastreg.svg']::text[], 'ACTIVE', now() - interval '12 days'),
-  ('00000000-0000-4000-8000-200000000013', '00000000-0000-4000-8000-100000000004', 'SHORTAGE_REQUEST', 'إنسولين نوفوميكس 30 100 وحدة/مل', 'إنسولين أسبارت', 'INJECTION', 15, 480, NULL, NULL, 'مطلوب توفير 15 علبة — الدفع نقداً أو بدل جمهور في جمهور', 'مندوب شحن داخلي', ARRAY[]::text[], 'ACTIVE', now() - interval '13 days'),
-  ('00000000-0000-4000-8000-200000000014', '00000000-0000-4000-8000-100000000001', 'SHORTAGE_REQUEST', 'أوجمنتين 1جم 14 قرص', 'أموكسيسيلين + كلافولانيك أسيد', 'TABLETS', 30, 96, NULL, NULL, 'نواقص عاجلة — يفضّل بدل جمهور في جمهور مع صيدلية قريبة', 'استلام من الصيدلية', ARRAY[]::text[], 'ACTIVE', now() - interval '14 days'),
-  ('00000000-0000-4000-8000-200000000015', '00000000-0000-4000-8000-100000000006', 'SHORTAGE_REQUEST', 'فنتولين بخاخ 100 ميكروجرام', 'سالبوتامول سلفات', 'DROPS', 20, 58, NULL, NULL, 'مطلوب توفير فوري — بدل بكاتافلاي أو نيوروفين', 'توصيل متبادل', ARRAY[]::text[], 'ACTIVE', now() - interval '15 days'),
-  ('00000000-0000-4000-8000-200000000016', '00000000-0000-4000-8000-100000000008', 'SHORTAGE_REQUEST', 'لانتوس سولوستار 100 وحدة/مل', 'إنسولين جلارجين', 'INJECTION', 10, 620, NULL, NULL, 'مطلوب 10 علب — سلسلة تبريد مطلوبة عند التسليم', 'مندوب شحن داخلي', ARRAY[]::text[], 'ACTIVE', now() - interval '16 days')
-on conflict (id) do nothing;
-
--- 5) SWAP PROPOSALS (pending negotiation examples)
-insert into public.swap_proposals (id, listing_id, proposer_pharmacy_id, offered_items, offered_items_description, offered_total_value_egp, handover_method, notes, status, created_at) values
-  ('00000000-0000-4000-8000-300000000001', '00000000-0000-4000-8000-200000000003', '00000000-0000-4000-8000-100000000001', '[{"name":"كونكور 5 مجم 30 قرص","quantity":18,"unit_price":72},{"name":"كتافلام 50 مجم 20 قرص","quantity":10,"unit_price":40}]'::jsonb, '18 علبة كونكور 5 مجم + 10 علب كتافلام 50 مجم', 1696, 'توصيل متبادل', 'الاستلام من صيدلية الأمل — مدينة نصر، متاح اليوم بعد ٦ مساءً.', 'PENDING', now() - interval '1 days'),
-  ('00000000-0000-4000-8000-300000000002', '00000000-0000-4000-8000-200000000002', '00000000-0000-4000-8000-100000000007', '[{"name":"نيوروفين شراب 120 مل","quantity":6,"unit_price":42}]'::jsonb, '6 علب نيوروفين شراب 120 مل', 252, 'مندوب شحن داخلي', 'فرق بسيط لصالحي يمكن تسويته نقداً عند الاستلام.', 'PENDING', now() - interval '2 days'),
-  ('00000000-0000-4000-8000-300000000003', '00000000-0000-4000-8000-200000000007', '00000000-0000-4000-8000-100000000005', '[{"name":"تليفاست 10 مجم 20 قرص","quantity":12,"unit_price":58}]'::jsonb, '12 علبة تليفاست 10 مجم', 696, 'استلام من الصيدلية', 'الفرق ٢٤ ج.م لصالح الطرف الآخر — جاهز للتسوية.', 'PENDING', now() - interval '3 days')
+-- 3) No demo pharmacies, listings, or proposals are inserted here.
+-- Real records must be created only by authenticated licensed pharmacy accounts.
 on conflict (id) do nothing;
 
 commit;

@@ -2,31 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import seedData from "@/data/seed.json";
 import type { Listing, Pharmacy, SwapProposal } from "@/lib/types";
-
-interface SeedListing extends Omit<Listing, "expiry_date" | "created_at"> {
-  expiry_offset_days: number | null;
-}
-
-interface SeedPharmacy extends Omit<Pharmacy, "created_at"> {}
-
-interface SeedProposal extends Omit<SwapProposal, "created_at"> {
-  created_offset_days: number;
-}
-
-interface SeedAccount {
-  email: string;
-  password: string;
-  pharmacy_id: string;
-}
-
-const seed = seedData as unknown as {
-  pharmacies: SeedPharmacy[];
-  accounts: SeedAccount[];
-  listings: SeedListing[];
-  proposals: SeedProposal[];
-};
 
 export interface AccountRow {
   email: string;
@@ -56,17 +32,6 @@ function dbPath(): string {
   return path.join(dataDir(), "db.json");
 }
 
-function isoDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = `${date.getMonth() + 1}`.padStart(2, "0");
-  const d = `${date.getDate()}`.padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function daysAgo(days: number): string {
-  return new Date(Date.now() - days * 86_400_000).toISOString();
-}
-
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 32).toString("hex");
@@ -82,33 +47,13 @@ export function verifyPasswordHash(password: string, stored: string): boolean {
   return crypto.timingSafeEqual(candidate, expected);
 }
 
-function buildSeedDb(): DbFile {
+function emptyDb(): DbFile {
   return {
     version: 1,
-    accounts: seed.accounts.map((account) => ({
-      email: account.email.toLowerCase(),
-      password_hash: hashPassword(account.password),
-      pharmacy_id: account.pharmacy_id,
-    })),
-    pharmacies: seed.pharmacies.map((pharmacy, index) => ({
-      ...pharmacy,
-      created_at: daysAgo(120 - index * 4),
-    })),
-    listings: seed.listings.map((listing, index) => {
-      const { expiry_offset_days, ...rest } = listing;
-      return {
-        ...rest,
-        expiry_date:
-          expiry_offset_days === null
-            ? null
-            : isoDate(new Date(Date.now() + expiry_offset_days * 86_400_000)),
-        created_at: daysAgo(index + 1),
-      } satisfies Listing;
-    }),
-    proposals: seed.proposals.map((proposal) => {
-      const { created_offset_days, ...rest } = proposal;
-      return { ...rest, created_at: daysAgo(created_offset_days) } satisfies SwapProposal;
-    }),
+    accounts: [],
+    pharmacies: [],
+    listings: [],
+    proposals: [],
   };
 }
 
@@ -126,13 +71,30 @@ async function persist(db: DbFile): Promise<void> {
 
 async function loadDb(): Promise<DbFile> {
   if (globalStore.__pharmaswapDb) return globalStore.__pharmaswapDb;
+
   try {
     const raw = await fs.readFile(dbPath(), "utf8");
-    const parsed = JSON.parse(raw) as DbFile;
-    globalStore.__pharmaswapDb = parsed;
-    return parsed;
+    const parsed = JSON.parse(raw) as Partial<DbFile>;
+    const db = {
+      version: 1,
+      accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
+      pharmacies: Array.isArray(parsed.pharmacies) ? parsed.pharmacies : [],
+      listings: Array.isArray(parsed.listings) ? parsed.listings : [],
+      proposals: Array.isArray(parsed.proposals) ? parsed.proposals : [],
+    } satisfies DbFile;
+
+    globalStore.__pharmaswapDb = db;
+    if (
+      parsed.accounts?.length ||
+      parsed.pharmacies?.length ||
+      parsed.listings?.length ||
+      parsed.proposals?.length
+    ) {
+      await persist(db);
+    }
+    return db;
   } catch {
-    const db = buildSeedDb();
+    const db = emptyDb();
     globalStore.__pharmaswapDb = db;
     await persist(db);
     return db;

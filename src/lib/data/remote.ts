@@ -16,19 +16,35 @@ type Row = Record<string, any>;
 export function remoteEnabled(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   );
+}
+
+function publicClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const key =
+    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
+
+  return createClient(url, key, {
+    auth: { persistSession: true, autoRefreshToken: true },
+  });
 }
 
 let serviceClient: SupabaseClient | null = null;
 
 function admin(): SupabaseClient {
   if (serviceClient) return serviceClient;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   serviceClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-    { auth: { persistSession: false, autoRefreshToken: false } },
+    url,
+    serviceKey ?? (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string),
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+    },
   );
   return serviceClient;
 }
@@ -265,16 +281,31 @@ export async function remoteAuthenticate(email: string, password: string): Promi
 export async function remoteRegisterPharmacy(
   input: PharmacyRegistrationInput,
 ): Promise<Pharmacy> {
-  const { data, error } = await admin().auth.admin.createUser({
+  const redirectTo =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "http://localhost:3000/login?verified=1";
+
+  const authClient = publicClient();
+  const { data, error } = await authClient.auth.signUp({
     email: input.email,
     password: input.password,
-    email_confirm: true,
+    options: {
+      emailRedirectTo: redirectTo,
+      data: {
+        pharmacy_name: input.pharmacy_name,
+        owner_name: input.owner_name,
+        phone: input.phone,
+      },
+    },
   });
+
   if (error || !data.user) {
     fail("create auth user", error ? { message: error.message } : null);
   }
 
-  const { data: pharmacy, error: pharmacyError } = await admin()
+  const profileClient = admin();
+  const { data: pharmacy, error: pharmacyError } = await profileClient
     .from("pharmacies")
     .insert({
       user_id: data.user.id,
@@ -292,6 +323,24 @@ export async function remoteRegisterPharmacy(
     .select("*")
     .single();
 
-  if (pharmacyError) fail("create pharmacy profile", pharmacyError);
+  if (pharmacyError) {
+    const fallback = await authClient.from("pharmacies").insert({
+      user_id: data.user.id,
+      pharmacy_name: input.pharmacy_name,
+      owner_name: input.owner_name,
+      phone: input.phone,
+      governorate_id: input.governorate_id,
+      city_id: input.city_id,
+      address_details: input.address_details,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      delivery_preferences: input.delivery_preferences,
+      is_verified: false,
+    }).select("*").single();
+
+    if (fallback.error) fail("create pharmacy profile", fallback.error);
+    return toPharmacy(fallback.data as Row);
+  }
+
   return toPharmacy(pharmacy as Row);
 }

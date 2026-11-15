@@ -1,8 +1,8 @@
 -- ============================================================================
 -- 002_seed_egypt_and_drugs.sql
 -- Reference data only: 27 Egyptian governorates + cities.
--- No demo pharmacies, listings, or swap proposals are seeded into the app.
--- Production data must be created by authenticated pharmacy users only.
+-- Production data is created only by real pharmacy users through the app.
+-- No demo pharmacies, listings, proposals, or seeded marketplace records.
 -- ============================================================================
 
 begin;
@@ -220,11 +220,7 @@ insert into public.cities (id, governorate_id, name_ar, name_en) values
   (2707, 27, 'البلينا', 'El Balyana')
 on conflict (id) do update set name_ar = excluded.name_ar, name_en = excluded.name_en;
 
--- 3) No demo pharmacies, listings, or proposals are inserted here.
--- Real records must be created only by authenticated licensed pharmacy accounts.
-on conflict (id) do nothing;
+-- 3) No demo pharmacies, listings, or proposals are inserted.
+-- Real records must be created by authenticated licensed pharmacy accounts only.
 
 commit;
-
--- Demo accounts are intentionally not inserted into auth.users.
--- Create your own pharmacy account through /onboarding in the app.

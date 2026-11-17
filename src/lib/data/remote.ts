@@ -20,24 +20,37 @@ export function remoteEnabled(): boolean {
   );
 }
 
-function publicClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const key =
-    (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
+function getSupabaseConfig(): { url: string; anonKey: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = (
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )?.trim();
 
-  return createClient(url, key, {
+  if (!url || !anonKey) return null;
+  return { url, anonKey };
+}
+
+function publicClient(): SupabaseClient | null {
+  const cfg = getSupabaseConfig();
+  if (!cfg) return null;
+
+  return createClient(cfg.url, cfg.anonKey, {
     auth: { persistSession: true, autoRefreshToken: true },
   });
 }
 
 let serviceClient: SupabaseClient | null = null;
 
-function admin(): SupabaseClient {
+function admin(): SupabaseClient | null {
   if (serviceClient) return serviceClient;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!url || (!serviceKey && !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)) {
+    return null;
+  }
 
   serviceClient = createClient(
     url,
@@ -47,6 +60,14 @@ function admin(): SupabaseClient {
     },
   );
   return serviceClient;
+}
+
+function requireAdminClient(): SupabaseClient {
+  const client = admin();
+  if (!client) {
+    throw new Error("Supabase admin client is unavailable. Check SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL.");
+  }
+  return client;
 }
 
 function fail(context: string, error: { message: string } | null): never {
@@ -137,7 +158,8 @@ const LISTING_SELECT =
   "*, pharmacy:pharmacies(*, governorate:governorates(*), city:cities(*))";
 
 export async function remoteListListingViews(): Promise<ListingView[]> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("listings")
     .select(LISTING_SELECT)
     .order("created_at", { ascending: false });
@@ -146,7 +168,8 @@ export async function remoteListListingViews(): Promise<ListingView[]> {
 }
 
 export async function remoteGetListingView(id: string): Promise<ListingView | null> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("listings")
     .select(LISTING_SELECT)
     .eq("id", id)
@@ -156,13 +179,15 @@ export async function remoteGetListingView(id: string): Promise<ListingView | nu
 }
 
 export async function remoteListPharmacies(): Promise<Pharmacy[]> {
-  const { data, error } = await admin().from("pharmacies").select("*");
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient.from("pharmacies").select("*");
   if (error) fail("load pharmacies", error);
   return (data ?? []).map((row) => toPharmacy(row as Row));
 }
 
 export async function remoteGetPharmacy(id: string): Promise<Pharmacy | null> {
-  const { data, error } = await admin().from("pharmacies").select("*").eq("id", id).maybeSingle();
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient.from("pharmacies").select("*").eq("id", id).maybeSingle();
   if (error) fail("load pharmacy", error);
   return data ? toPharmacy(data as Row) : null;
 }
@@ -170,7 +195,8 @@ export async function remoteGetPharmacy(id: string): Promise<Pharmacy | null> {
 export async function remoteCreatePharmacy(
   pharmacy: Omit<Pharmacy, "id" | "created_at"> & { id?: string; created_at?: string },
 ): Promise<Pharmacy> {
-  const { data, error } = await admin().from("pharmacies").insert(pharmacy).select("*").single();
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient.from("pharmacies").insert(pharmacy).select("*").single();
   if (error) fail("create pharmacy", error);
   return toPharmacy(data as Row);
 }
@@ -179,7 +205,8 @@ export async function remoteUpdatePharmacy(
   id: string,
   patch: Partial<Pharmacy>,
 ): Promise<Pharmacy | null> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("pharmacies")
     .update(patch)
     .eq("id", id)
@@ -193,7 +220,8 @@ export async function remoteCreateListing(
   pharmacyId: string,
   input: CreateListingInput,
 ): Promise<Listing> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("listings")
     .insert({
       pharmacy_id: pharmacyId,
@@ -220,12 +248,14 @@ export async function remoteUpdateListing(
   id: string,
   patch: Partial<Listing>,
 ): Promise<void> {
-  const { error } = await admin().from("listings").update(patch).eq("id", id);
+  const adminClient = requireAdminClient();
+  const { error } = await adminClient.from("listings").update(patch).eq("id", id);
   if (error) fail("update listing", error);
 }
 
 export async function remoteListProposalViews(): Promise<ProposalView[]> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("swap_proposals")
     .select("*, listing:listings(*, pharmacy:pharmacies(*, governorate:governorates(*), city:cities(*))), proposer:pharmacies(*)")
     .order("created_at", { ascending: false });
@@ -244,7 +274,8 @@ export async function remoteCreateProposal(
   pharmacyId: string,
   proposal: Omit<SwapProposal, "id" | "created_at" | "proposer_pharmacy_id">,
 ): Promise<SwapProposal> {
-  const { data, error } = await admin()
+  const adminClient = requireAdminClient();
+  const { data, error } = await adminClient
     .from("swap_proposals")
     .insert({ ...proposal, proposer_pharmacy_id: pharmacyId })
     .select("*")
@@ -257,19 +288,26 @@ export async function remoteUpdateProposal(
   id: string,
   patch: Partial<SwapProposal>,
 ): Promise<void> {
-  const { error } = await admin().from("swap_proposals").update(patch).eq("id", id);
+  const adminClient = requireAdminClient();
+  const { error } = await adminClient.from("swap_proposals").update(patch).eq("id", id);
   if (error) fail("update proposal", error);
 }
 
 export async function remoteAuthenticate(email: string, password: string): Promise<string | null> {
-  const anon = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
+  const cfg = getSupabaseConfig();
+  if (!cfg) return null;
+
+  const anon = createClient(cfg.url, cfg.anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   const { data, error } = await anon.auth.signInWithPassword({ email, password });
   if (error || !data.user) return null;
-  const { data: pharmacy, error: pharmacyError } = await admin()
+
+  const adminClient = admin();
+  if (!adminClient) return null;
+
+  const { data: pharmacy, error: pharmacyError } = await adminClient
     .from("pharmacies")
     .select("id")
     .eq("user_id", data.user.id)
@@ -280,11 +318,8 @@ export async function remoteAuthenticate(email: string, password: string): Promi
 
 export async function remoteRegisterPharmacy(
   input: PharmacyRegistrationInput,
-): Promise<Pharmacy> {
-  const redirectTo =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL;
-
+): Promise<Pharmacy | null> {
+  const redirectTo = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
   if (!redirectTo) {
     throw new Error(
       "NEXT_PUBLIC_SITE_URL or NEXT_PUBLIC_APP_URL must be set before email verification redirects can be created.",
@@ -292,7 +327,11 @@ export async function remoteRegisterPharmacy(
   }
 
   const authClient = publicClient();
-  const emailRedirectTo = new URL("/login?verified=1", redirectTo).toString();
+  if (!authClient) {
+    throw new Error("Supabase public client is not configured.");
+  }
+
+  const emailRedirectTo = new URL("/auth/callback", redirectTo).toString();
 
   const { data, error } = await authClient.auth.signUp({
     email: input.email,
@@ -303,6 +342,12 @@ export async function remoteRegisterPharmacy(
         pharmacy_name: input.pharmacy_name,
         owner_name: input.owner_name,
         phone: input.phone,
+        governorate_id: input.governorate_id,
+        city_id: input.city_id,
+        address_details: input.address_details,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        delivery_preferences: input.delivery_preferences,
       },
     },
   });
@@ -311,43 +356,20 @@ export async function remoteRegisterPharmacy(
     fail("create auth user", error ? { message: error.message } : null);
   }
 
-  const profileClient = admin();
-  const { data: pharmacy, error: pharmacyError } = await profileClient
-    .from("pharmacies")
-    .insert({
-      user_id: data.user.id,
-      pharmacy_name: input.pharmacy_name,
-      owner_name: input.owner_name,
-      phone: input.phone,
-      governorate_id: input.governorate_id,
-      city_id: input.city_id,
-      address_details: input.address_details,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      delivery_preferences: input.delivery_preferences,
-      is_verified: false,
-    })
-    .select("*")
-    .single();
-
-  if (pharmacyError) {
-    const fallback = await authClient.from("pharmacies").insert({
-      user_id: data.user.id,
-      pharmacy_name: input.pharmacy_name,
-      owner_name: input.owner_name,
-      phone: input.phone,
-      governorate_id: input.governorate_id,
-      city_id: input.city_id,
-      address_details: input.address_details,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      delivery_preferences: input.delivery_preferences,
-      is_verified: false,
-    }).select("*").single();
-
-    if (fallback.error) fail("create pharmacy profile", fallback.error);
-    return toPharmacy(fallback.data as Row);
+  const adminClient = admin();
+  if (!adminClient) {
+    return null;
   }
 
-  return toPharmacy(pharmacy as Row);
+  const { data: existingPharmacy } = await adminClient
+    .from("pharmacies")
+    .select("id")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  if (existingPharmacy) {
+    return toPharmacy(existingPharmacy as Row);
+  }
+
+  return null;
 }

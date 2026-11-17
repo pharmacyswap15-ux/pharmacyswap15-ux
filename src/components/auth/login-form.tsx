@@ -23,10 +23,12 @@ export function LoginForm({
   next,
   localMode,
   error: initialError,
+  verified,
 }: {
   next: string;
   localMode: boolean;
   error?: string;
+  verified?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<AuthFormState, FormData>(loginAction, {});
   const [showPassword, setShowPassword] = useState(false);
@@ -50,6 +52,13 @@ export function LoginForm({
             أدخل بيانات حساب الصيدلية للوصول إلى السوق الحي، إدارة عروضك، ومتابعة عروض البدل
             الواردة.
           </p>
+
+          {verified && (
+            <div className="mt-4 rounded-sm border border-brand-line bg-brand-soft px-3 py-2 text-[11px] text-brand-ink">
+              تم إنشاء الحساب بنجاح. تم إرسال رابط التفعيل إلى بريدك الإلكتروني، يرجى الضغط عليه لتفعيل
+              الحساب قبل تسجيل الدخول.
+            </div>
+          )}
 
           <form action={formAction} className="mt-4 space-y-3">
             <input type="hidden" name="next" value={next} />

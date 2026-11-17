@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; verified?: string }>;
 }) {
   const pharmacyId = await getSessionPharmacyId();
   if (pharmacyId) redirect("/market");
@@ -22,5 +22,12 @@ export default async function LoginPage({
   const params = await searchParams;
   const next = params.next && params.next.startsWith("/") ? params.next : "/market";
 
-  return <LoginForm next={next} localMode={!remoteEnabled()} error={params.error} />;
+  return (
+    <LoginForm
+      next={next}
+      localMode={!remoteEnabled()}
+      error={params.error}
+      verified={params.verified === "1"}
+    />
+  );
 }

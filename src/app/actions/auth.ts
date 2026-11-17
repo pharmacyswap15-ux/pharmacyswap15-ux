@@ -23,7 +23,7 @@ export async function loginAction(
 
   const pharmacyId = await authenticatePharmacy(email, password);
   if (!pharmacyId) {
-    return { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." };
+    return { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة، أو الحساب غير مفعّل بعدة التحقق." };
   }
 
   await setSession(pharmacyId);
@@ -81,9 +81,8 @@ export async function registerAction(
   });
 
   if (!pharmacy) {
-    return { error: "هذا البريد الإلكتروني مسجل بالفعل — سجّل الدخول بدلاً من ذلك." };
+    return { error: "تعذّر إنشاء الحساب. تأكد من إعداد Supabase أو أن البريد الإلكتروني غير مسجل مسبقاً." };
   }
 
-  await setSession(pharmacy.id);
-  redirect("/market?welcome=1");
+  redirect("/login?verified=1");
 }

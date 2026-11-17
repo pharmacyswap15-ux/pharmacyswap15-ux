@@ -130,7 +130,7 @@ export function LoginForm({
 
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2.5">
             <p className="text-[10.5px] text-ink-muted">ليس لديك حساب؟</p>
-            <Link href="/onboarding" className="text-[11px] font-semibold text-brand hover:underline">
+            <Link href="/signup" className="text-[11px] font-semibold text-brand hover:underline">
               إنشاء ملف صيدلية جديد
             </Link>
           </div>

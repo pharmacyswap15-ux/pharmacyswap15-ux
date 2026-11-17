@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
@@ -9,9 +8,11 @@ export function Logo({ compact = false, className }: { compact?: boolean; classN
       href="/market"
       className={cn("flex select-none items-center gap-2.5 no-tap-highlight", className)}
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-brand text-white">
-        <ArrowLeftRight size={17} strokeWidth={2} aria-hidden />
-      </span>
+      <img
+        src="/logo.svg"
+        alt="PHARMASWAP logo"
+        className="size-8 shrink-0 rounded-sm border border-line bg-white object-contain p-1"
+      />
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-[15px] font-extrabold tracking-[-0.02em] text-ink">

@@ -43,7 +43,25 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className={`${plexArabic.variable} ${jakarta.variable} ${jetbrains.variable}`}>
-      <body className="min-h-dvh bg-canvas text-ink antialiased">{children}</body>
+      <body className="relative min-h-dvh bg-canvas text-ink antialiased">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="h-full w-full object-cover opacity-90"
+            aria-hidden="true"
+          >
+            <source src="/screen.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" aria-hidden="true" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.62),_rgba(255,255,255,0.18)_38%,_rgba(255,255,255,0.15)_100%)]" aria-hidden="true" />
+        </div>
+
+        <div className="relative z-10">{children}</div>
+      </body>
     </html>
   );
 }

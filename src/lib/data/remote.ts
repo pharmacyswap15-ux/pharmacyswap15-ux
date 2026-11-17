@@ -282,16 +282,23 @@ export async function remoteRegisterPharmacy(
   input: PharmacyRegistrationInput,
 ): Promise<Pharmacy> {
   const redirectTo =
-    process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    "http://localhost:3000/login?verified=1";
+    process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!redirectTo) {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL or NEXT_PUBLIC_APP_URL must be set before email verification redirects can be created.",
+    );
+  }
 
   const authClient = publicClient();
+  const emailRedirectTo = new URL("/login?verified=1", redirectTo).toString();
+
   const { data, error } = await authClient.auth.signUp({
     email: input.email,
     password: input.password,
     options: {
-      emailRedirectTo: redirectTo,
+      emailRedirectTo,
       data: {
         pharmacy_name: input.pharmacy_name,
         owner_name: input.owner_name,

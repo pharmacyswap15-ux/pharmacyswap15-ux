@@ -54,13 +54,25 @@ export function decorateListings(listings: Listing[], pharmacies: Pharmacy[]): L
 /* -------------------------------------------------------------------------- */
 
 export async function getListingViews(): Promise<ListingView[]> {
-  if (remote.remoteEnabled()) return remote.remoteListListingViews();
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteListListingViews();
+    } catch (error) {
+      console.warn("[pharmaswap] remote listings unavailable; using local fallback.", error);
+    }
+  }
   const [listings, pharmacies] = await Promise.all([local.listListings(), local.listPharmacies()]);
   return decorateListings(listings, pharmacies);
 }
 
 export async function getListingView(id: string): Promise<ListingView | null> {
-  if (remote.remoteEnabled()) return remote.remoteGetListingView(id);
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteGetListingView(id);
+    } catch (error) {
+      console.warn("[pharmaswap] remote listing unavailable; using local fallback.", error);
+    }
+  }
   const listing = await local.getListing(id);
   if (!listing) return null;
   const pharmacy = await local.getPharmacy(listing.pharmacy_id);
@@ -68,17 +80,35 @@ export async function getListingView(id: string): Promise<ListingView | null> {
 }
 
 export async function getPharmacyById(id: string): Promise<Pharmacy | null> {
-  if (remote.remoteEnabled()) return remote.remoteGetPharmacy(id);
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteGetPharmacy(id);
+    } catch (error) {
+      console.warn("[pharmaswap] remote pharmacy unavailable; using local fallback.", error);
+    }
+  }
   return local.getPharmacy(id);
 }
 
 export async function getAllPharmacies(): Promise<Pharmacy[]> {
-  if (remote.remoteEnabled()) return remote.remoteListPharmacies();
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteListPharmacies();
+    } catch (error) {
+      console.warn("[pharmaswap] remote pharmacies unavailable; using local fallback.", error);
+    }
+  }
   return local.listPharmacies();
 }
 
 export async function getProposalViews(): Promise<ProposalView[]> {
-  if (remote.remoteEnabled()) return remote.remoteListProposalViews();
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteListProposalViews();
+    } catch (error) {
+      console.warn("[pharmaswap] remote proposals unavailable; using local fallback.", error);
+    }
+  }
   const [proposals, listings, pharmacies] = await Promise.all([
     local.listProposals(),
     local.listListings(),
@@ -109,7 +139,13 @@ export async function createListingRecord(
   pharmacyId: string,
   input: CreateListingInput,
 ): Promise<Listing> {
-  if (remote.remoteEnabled()) return remote.remoteCreateListing(pharmacyId, input);
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteCreateListing(pharmacyId, input);
+    } catch (error) {
+      console.warn("[pharmaswap] remote create listing failed; using local fallback.", error);
+    }
+  }
 
   return local.createListing({
     id: local.newId("lst"),
@@ -132,8 +168,12 @@ export async function createListingRecord(
 
 export async function setListingStatus(id: string, status: ListingStatus): Promise<void> {
   if (remote.remoteEnabled()) {
-    await remote.remoteUpdateListing(id, { status });
-    return;
+    try {
+      await remote.remoteUpdateListing(id, { status });
+      return;
+    } catch (error) {
+      console.warn("[pharmaswap] remote update listing failed; using local fallback.", error);
+    }
   }
   await local.updateListing(id, { status });
 }
@@ -159,15 +199,19 @@ export async function createProposalRecord(
     .join(" + ");
 
   if (remote.remoteEnabled()) {
-    return remote.remoteCreateProposal(pharmacyId, {
-      listing_id: input.listing_id,
-      offered_items: offeredItems,
-      offered_items_description: description,
-      offered_total_value_egp: total,
-      handover_method: input.handover_method,
-      notes: input.notes || null,
-      status: "PENDING",
-    });
+    try {
+      return await remote.remoteCreateProposal(pharmacyId, {
+        listing_id: input.listing_id,
+        offered_items: offeredItems,
+        offered_items_description: description,
+        offered_total_value_egp: total,
+        handover_method: input.handover_method,
+        notes: input.notes || null,
+        status: "PENDING",
+      });
+    } catch (error) {
+      console.warn("[pharmaswap] remote create proposal failed; using local fallback.", error);
+    }
   }
 
   return local.createProposal({
@@ -237,7 +281,13 @@ export async function authenticatePharmacy(
   email: string,
   password: string,
 ): Promise<string | null> {
-  if (remote.remoteEnabled()) return remote.remoteAuthenticate(email, password);
+  if (remote.remoteEnabled()) {
+    try {
+      return await remote.remoteAuthenticate(email, password);
+    } catch (error) {
+      console.warn("[pharmaswap] remote auth unavailable; using local fallback.", error);
+    }
+  }
 
   const account = await local.findAccount(email);
   if (!account) return null;
@@ -249,7 +299,11 @@ export async function registerPharmacyRecord(
   input: PharmacyRegistrationInput,
 ): Promise<Pharmacy | null> {
   if (remote.remoteEnabled()) {
-    return remote.remoteRegisterPharmacy(input);
+    try {
+      return await remote.remoteRegisterPharmacy(input);
+    } catch (error) {
+      console.warn("[pharmaswap] remote pharmacy registration unavailable; using local fallback.", error);
+    }
   }
 
   const existing = await local.findAccount(input.email);
